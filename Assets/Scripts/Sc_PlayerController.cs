@@ -9,13 +9,18 @@ public class Sc_PlayerController : MonoBehaviour
     [SerializeField] float swapTime = 0.2f;
     bool isCounting = false;
     [SerializeField] float countTimer = 0;
+
+    bool swap = false;
+
+    public delegate void jump();
+    public static event jump OnJump;
     // Start is called before the first frame update
     void Start()
     {
         OverworldPlayer = GameObject.FindWithTag("Overworld");
         UnderworldPlayer = GameObject.FindWithTag("Underworld");
 
-        UnderworldPlayer.SetActive(false);
+        UnderworldPlayer.GetComponent<Sc_PlayerMovement>().isActive = false;
 
         countTimer = swapTime;
         // Get overworld and underworld players with tags
@@ -28,24 +33,34 @@ public class Sc_PlayerController : MonoBehaviour
         if (Input.GetKey(KeyCode.Space)) {
             countTimer -= Time.deltaTime;
             Debug.Log("REDUCING TIME");
-            isCounting = true;
+            if (countTimer <= 0)
+            {
+                 // function to sawp active player
+                countTimer = swapTime;
+                swap = true;
+            }
         }
-        else if (Input.GetKeyUp(KeyCode.Space) && isCounting) {
+        else if (Input.GetKeyUp(KeyCode.Space)) {
+            if(countTimer > 0) {
+                if(OnJump != null) { OnJump(); }
+            }
             countTimer = swapTime;
-            isCounting = false;
+            isCounting = true;
             Debug.Log("RELEASED");
         }
 
-        if(countTimer <= 0)
-        {
-            Debug.Log("SWAP PLAYERS");
-            SwapPlayers(); // function to sawp active player
-            countTimer = swapTime;
-        }
+        SwapPlayers();
     }
 
     void SwapPlayers() {
-        OverworldPlayer.SetActive(!OverworldPlayer.activeSelf);
-        UnderworldPlayer.SetActive(!OverworldPlayer.activeSelf);
+        if(swap && (OverworldPlayer.GetComponent<Sc_PlayerMovement>().IsGrounded() && UnderworldPlayer.GetComponent<Sc_PlayerMovement>().IsGrounded()))
+        {
+            OverworldPlayer.GetComponent<Sc_PlayerMovement>().isActive = !OverworldPlayer.GetComponent<Sc_PlayerMovement>().isActive;
+            
+            UnderworldPlayer.GetComponent<Sc_PlayerMovement>().isActive = !UnderworldPlayer.GetComponent<Sc_PlayerMovement>().isActive;
+            
+            swap = false;
+        }
+
     }
 }
